@@ -1,0 +1,65 @@
+/***
+|''Name:''|APIPostPlugin|
+|''Description:''|To test RESTful POST APIs|
+|''Version:''|0.0.0|
+|''Date:''|21.06.2016|
+|''Source:''|http://www.github?|
+|''Author:''|SteinthorJason|
+|''License:''|[[BSD open source license]]|
+|''~CoreVersion:''|2.1.0|
+
+a macro that creates 2 inputs, a submit button and a output frame.
+The first input is for the http link, the second for the tiddler with the (xml?) code being sent.
+
+***/
+//{{{
+
+version.extensions.APIPostPlugin = { major: 0, minor: 0, revision: 0, date: new Date(2016,6,21) };
+config.macros.APIPostPlugin = {
+	options: {
+		testOption:		'empty',
+		rows:			10,
+		cols:			40
+	},
+	init: function() {
+		merge(config.options,this.options,true);
+	},
+	handler: function(place,macroName,params,wikifier,paramString,tiddler) {
+
+		// createTiddlyElement(parent,element,id,className,text,attribs);
+		var htmlInput = createTiddlyElement(place,"input","urlInput","urlInput",null);
+		htmlInput.value ="http://httpbin.org/post";
+		var xmlInput = createTiddlyElement(place,"input","xmlInput","xmlInput",null);
+		var br2 = createTiddlyElement(place,"br",null,null,null);
+		// createTiddlyButton(parent,text,tooltip,action,className,id,accessKey,attribs);
+		var submitButton = createTiddlyButton(place,"Submit","tooltip",
+		function () {
+			var URL = document.getElementById("urlInput").value;
+			var XML = store.getTiddlerText(document.getElementById("xmlInput").value);
+			var xhr;
+			if (window.XMLHttpRequest)
+				xhr = new XMLHttpRequest();
+			xhr.onreadystatechange = function() {
+			//alert("state: "+xhr.readyState+" status: "+xhr.status);
+				if (xhr.readyState == 4 && xhr.status == 200) {
+					// var myArr = JSON.parse(xhr.responseText);
+					document.getElementById("resultArea").innerHTML = xhr.responseText+xhr.responseXML;
+				}
+			};
+			xhr.open("POST", URL, true);
+			xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+			xhr.setRequestHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+			xhr.send(XML);
+			return false;
+		}
+		,null,"APIButton",null);
+		var br1 = createTiddlyElement(place,"br",null,null,null);
+		var area=createTiddlyElement(place,"textarea","resultArea","resultArea",null);
+		area.setAttribute("readonly",true);
+		area.setAttribute("rows",config.options.rows);
+		area.setAttribute("cols",config.options.cols);
+		area.appendChild(document.createTextNode(params[0]||config.options.testOption));
+	}
+};
+
+//}}}
